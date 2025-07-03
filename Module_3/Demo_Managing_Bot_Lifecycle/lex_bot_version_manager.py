@@ -16,10 +16,10 @@ import time
 from botocore.exceptions import ClientError
 
 # Configuration - Update these values for your bot
-BOT_ID = "T9AOKQH21Q"  # Replace with your actual bot ID from the console
-BOT_NAME = "SimpleTutorialBot"  # The name of your bot
+BOT_ID = "YOUR_BOT_ID"  # Replace with your actual bot ID from the console
+BOT_NAME = "SimpleBot"  # The name of your bot
 REGION = "us-east-1"  # Replace with your preferred AWS region
-ALIAS_NAME = "PROD"  # The alias we created in the console
+ALIAS_NAME = "DEMO"  # The alias we created in the console
 
 def create_lex_client():
     """
