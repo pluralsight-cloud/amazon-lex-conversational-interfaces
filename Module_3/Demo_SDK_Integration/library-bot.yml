@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Simple Library Book Reservation Bot for Lex Tutorial
+
+Resources:
+  # IAM role for the bot
+  LibraryBotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lexv2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: LibraryBotPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "polly:SynthesizeSpeech"
+                Resource: "*"
+
+  # The Library Book Reservation Bot
+  LibraryBookBot:
+    DependsOn: LibraryBotRole
+    Type: AWS::Lex::Bot
+    Properties:
+      Name: "LibraryBookBot"
+      Description: "Bot to help users reserve library books"
+      RoleArn: !GetAtt LibraryBotRole.Arn
+      DataPrivacy:
+        ChildDirected: false
+      IdleSessionTTLInSeconds: 300
+      BotLocales:
+        - LocaleId: "en_US"
+          Description: "English US locale"
+          NluConfidenceThreshold: 0.40
+          VoiceSettings:
+            VoiceId: "Joanna"
+          SlotTypes:
+            - Name: "BookGenres"
+              Description: "Types of book genres"
+              SlotTypeValues:
+                - SampleValue:
+                    Value: fiction
+                - SampleValue:
+                    Value: mystery
+                - SampleValue:
+                    Value: romance
+                - SampleValue:
+                    Value: "science fiction"
+                - SampleValue:
+                    Value: biography
+                - SampleValue:
+                    Value: history
+                - SampleValue:
+                    Value: cookbook
+              ValueSelectionSetting:
+                ResolutionStrategy: ORIGINAL_VALUE
+          Intents:
+            - Name: "ReserveBook"
+              Description: "Intent to reserve a library book"
+              SampleUtterances:
+                - Utterance: "I want to reserve a book"
+                - Utterance: "Reserve a book for me"
+                - Utterance: "Can I put a book on hold"
+                - Utterance: "I need to reserve a book"
+                - Utterance: "Hold a book for pickup"
+                - Utterance: "I'd like to reserve a book"
+                - Utterance: "Can you reserve a book for me"
+              SlotPriorities:
+                - Priority: 1
+                  SlotName: BookTitle
+                - Priority: 2
+                  SlotName: PickupDate
+              Slots:
+                - Name: "BookTitle"
+                  Description: "Title of the book to reserve"
+                  SlotTypeName: "AMAZON.FreeFormInput"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Required"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "What's the title of the book you'd like to reserve?"
+                      MaxRetries: 2
+                      AllowInterrupt: false
+                - Name: "PickupDate"
+                  Description: "When to pickup the book"
+                  SlotTypeName: "AMAZON.Date"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Required"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "When would you like to pick up the book?"
+                      MaxRetries: 2
+                      AllowInterrupt: false
+              IntentConfirmationSetting:
+                PromptSpecification:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: "I'll reserve '{BookTitle}' for pickup on {PickupDate}. Should I confirm this reservation?"
+                  MaxRetries: 2
+                  AllowInterrupt: false
+                DeclinationResponse:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: "No problem! Your reservation has been cancelled."
+                  AllowInterrupt: false
+              IntentClosingSetting:
+                ClosingResponse:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: "Great! I've reserved '{BookTitle}' for you. Please pick it up by {PickupDate}. Thank you!"
+                  AllowInterrupt: false
+            - Name: "CheckAvailability"
+              Description: "Check if a book is available"
+              SampleUtterances:
+                - Utterance: "Is a book available"
+                - Utterance: "Do you have a book"
+                - Utterance: "Check availability of a book"
+                - Utterance: "Is a book in stock"
+                - Utterance: "Can I find a book here"
+                - Utterance: "Do you carry a specific book"
+              SlotPriorities:
+                - Priority: 1
+                  SlotName: BookTitle
+              Slots:
+                - Name: "BookTitle"
+                  Description: "Title of the book to check"
+                  SlotTypeName: "AMAZON.FreeFormInput"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Required"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "Which book would you like me to check for availability?"
+                      MaxRetries: 2
+                      AllowInterrupt: false
+              IntentClosingSetting:
+                ClosingResponse:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: "Let me check... Yes, '{BookTitle}' is currently available at our library."
+                  AllowInterrupt: false
+            - Name: "LibraryHours"
+              Description: "Get library operating hours"
+              SampleUtterances:
+                - Utterance: "What are your hours"
+                - Utterance: "When are you open"
+                - Utterance: "What time do you open"
+                - Utterance: "What time do you close"
+                - Utterance: "Are you open today"
+                - Utterance: "Library hours"
+                - Utterance: "Operating hours"
+              IntentClosingSetting:
+                ClosingResponse:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: "Our library is open Monday-Friday 9AM-8PM, Saturday 10AM-6PM, and Sunday 12PM-5PM. We're closed on major holidays."
+                  AllowInterrupt: false
+            - Name: "FallbackIntent"
+              Description: "Default intent when no other intent matches"
+              ParentIntentSignature: "AMAZON.FallbackIntent"
+
+  # Bot version
+  LibraryBotVersion:
+    DependsOn: LibraryBookBot
+    Type: AWS::Lex::BotVersion
+    Properties:
+      BotId: !Ref LibraryBookBot
+      BotVersionLocaleSpecification:
+        - LocaleId: en_US
+          BotVersionLocaleDetails:
+            SourceBotVersion: DRAFT
+      Description: "Version 1 of Library Book Bot"
+
+  # Bot alias
+  LibraryBotAlias:
+    DependsOn: LibraryBotVersion
+    Type: AWS::Lex::BotAlias
+    Properties:
+      BotId: !Ref LibraryBookBot
+      BotAliasName: "LibraryBotAlias"
+      BotVersion: !GetAtt LibraryBotVersion.BotVersion
+      Description: "Production alias for Library Book Bot"
+
+Outputs:
+  BotId:
+    Description: "ID of the Library Book Bot"
+    Value: !Ref LibraryBookBot
+    Export:
+      Name: !Sub "${AWS::StackName}-BotId"
+  
+  BotAliasId:
+    Description: "ID of the bot alias"
+    Value: !Ref LibraryBotAlias
+    Export:
+      Name: !Sub "${AWS::StackName}-BotAliasId"
+  
+  BotName:
+    Description: "Name of the bot"
+    Value: "LibraryBookBot"
