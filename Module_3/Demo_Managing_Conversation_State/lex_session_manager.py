@@ -20,10 +20,10 @@ import uuid
 from botocore.exceptions import ClientError
 
 # Configuration - Update these values for your bot
-BOT_ID = "XNZGGROHXL"  # Replace with your SessionManagementBot ID
-BOT_ALIAS_ID = "TSTALIASID"  # Use TSTALIASID for testing or your PROD alias ID
-LOCALE_ID = "en_US"  # English US locale
-REGION = "us-east-1"  # Replace with your preferred AWS region
+BOT_ID = 'YOUR_BOT_ID'  # Replace with your Bot ID
+BOT_ALIAS_ID = 'TSTALIASID'  # Use TSTALIASID for testing or your PROD alias ID
+LOCALE_ID = 'en_US'  # English US locale
+REGION = 'us-east-1'  # Replace with your preferred AWS region
 
 def create_lex_runtime_client():
     """
@@ -42,7 +42,7 @@ def generate_session_id():
     """
     Generate a unique session ID for the conversation
     """
-    session_id = f"session-{uuid.uuid4()}"
+    session_id = f'session-{uuid.uuid4()}'
     print(f"Generated session ID: {session_id}")
     return session_id
 
@@ -85,7 +85,7 @@ def send_message_to_bot(client, bot_id, bot_alias_id, locale_id, session_id, mes
         response = client.recognize_text(**request_params)
         
         # Extract key information from the response
-        bot_message = ""
+        bot_message = ''
         if 'messages' in response and response['messages']:
             bot_message = response['messages'][0].get('content', '')
         
@@ -151,7 +151,7 @@ def demonstrate_session_attributes(client, bot_id, bot_alias_id, locale_id, sess
     # Send first message with session attributes
     response = send_message_to_bot(
         client, bot_id, bot_alias_id, locale_id, session_id,
-        "I want to order a pizza",
+        'I want to order a pizza',
         session_attributes=custom_attributes
     )
     
@@ -180,11 +180,11 @@ def simulate_multi_turn_conversation(client, bot_id, bot_alias_id, locale_id):
     
     # Conversation flow
     conversation_steps = [
-        "Hello",
-        "I want to order a pizza",
-        "Large",
-        "Pepperoni",
-        "Yes, that's correct"
+        'Hello',
+        'I want to order a pizza',
+        'Large',
+        'Pepperoni',
+        'Yes, that\'s correct'
     ]
     
     session_attributes = {}
@@ -229,7 +229,7 @@ def demonstrate_context_switching(client, bot_id, bot_alias_id, locale_id):
     print("\n--- Starting Pizza Order ---")
     response1 = send_message_to_bot(
         client, bot_id, bot_alias_id, locale_id, session_id,
-        "I want to order a pizza", session_attributes
+        'I want to order a pizza', session_attributes
     )
     
     if response1:
@@ -239,7 +239,7 @@ def demonstrate_context_switching(client, bot_id, bot_alias_id, locale_id):
         print("\n--- Providing Size ---")
         response2 = send_message_to_bot(
             client, bot_id, bot_alias_id, locale_id, session_id,
-            "Medium", session_attributes
+            'Medium', session_attributes
         )
         
         if response2:
@@ -249,7 +249,7 @@ def demonstrate_context_switching(client, bot_id, bot_alias_id, locale_id):
             print("\n--- Canceling Order (Context Switch) ---")
             response3 = send_message_to_bot(
                 client, bot_id, bot_alias_id, locale_id, session_id,
-                "Actually, cancel that", session_attributes
+                'Actually, cancel that', session_attributes
             )
             
             if response3:
@@ -259,7 +259,7 @@ def demonstrate_context_switching(client, bot_id, bot_alias_id, locale_id):
                 print("\n--- Starting New Order in Same Session ---")
                 response4 = send_message_to_bot(
                     client, bot_id, bot_alias_id, locale_id, session_id,
-                    "I want to order a pizza", session_attributes
+                    'I want to order a pizza', session_attributes
                 )
 
 def analyze_session_state(response):
@@ -301,7 +301,7 @@ def main():
     print("=" * 60)
     
     # Validate configuration
-    if BOT_ID == "YOUR_BOT_ID_HERE":
+    if BOT_ID == 'YOUR_BOT_ID_HERE':
         print("Please update the BOT_ID variable with your actual bot ID")
         print("You can find your bot ID in the Lex console")
         return
@@ -334,5 +334,5 @@ def main():
     except Exception as e:
         print(f"Error during demo: {str(e)}")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
